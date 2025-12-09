@@ -93,7 +93,6 @@
     <a href="workers.html">Workers</a>
     <a href="customers.html">Customers</a>
     <a href="events.html">Events</a>
-
   </nav>
 
   <div class="hero">
@@ -126,6 +125,10 @@
     </div>
   </div>
 
+  <!-- Workers dynamic section -->
+  <div class="cards" id="workersContainer">
+    <!-- Supabase Workers will appear here -->
+  </div>
 
   <footer>
     © 2025 Staff Dispatch Web — Built by Mel 🚀
@@ -135,11 +138,30 @@
   import { supabase } from './supabaseClient.js'
 
   async function getWorkers() {
-    let { data, error } = await supabase.from('workers').select('*')
-    console.log(data, error)
+    let { data: workers, error } = await supabase.from('workers').select('*')
+    if (error) {
+      console.error('Error fetching workers:', error)
+      return
+    }
+
+    const container = document.getElementById('workersContainer')
+    container.innerHTML = '' // clear existing content
+
+    workers.forEach(worker => {
+      const card = document.createElement('div')
+      card.className = 'card'
+      card.innerHTML = `
+        <h3>${worker.name}</h3>
+        <p>Role: ${worker.role}</p>
+        <p>Contract: ${worker.contract}</p>
+        <p>Stars: ${'⭐'.repeat(worker.stars || 0)}</p>
+      `
+      container.appendChild(card)
+    })
   }
 
   getWorkers()
 </script>
+
 </body>
 </html>
