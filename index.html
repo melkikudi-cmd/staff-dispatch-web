@@ -125,6 +125,17 @@
       <p>Automatically generate smart quotations.</p>
     </div>
   </div>
+  <script type="module">
+  import { supabase } from './supabaseClient.js'
+
+  async function getWorkers() {
+    let { data, error } = await supabase.from('workers').select('*')
+    console.log(data, error)
+  }
+
+  getWorkers()
+</script>
+
 
   <footer>
     © 2025 Staff Dispatch Web — Built by Mel 🚀
