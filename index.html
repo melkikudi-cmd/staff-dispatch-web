@@ -39,27 +39,30 @@
     }
 
     .hero {
-      padding: 60px 20px;
+      padding: 40px 20px;
       text-align: center;
     }
 
     .hero h1 {
-      font-size: 36px;
+      font-size: 32px;
     }
 
-    .hero p {
-      color: #cbd5f5;
-      max-width: 500px;
-      margin: 20px auto;
+    .section {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .section h2 {
+      color: #38bdf8;
+      margin-bottom: 20px;
+      text-align: center;
     }
 
     .cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 20px;
-      padding: 40px 20px;
-      max-width: 1000px;
-      margin: auto;
     }
 
     .card {
@@ -67,10 +70,49 @@
       padding: 20px;
       border-radius: 12px;
       border: 1px solid #1e293b;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4);
     }
 
     .card h3 {
       color: #38bdf8;
+      margin-top: 0;
+    }
+
+    form input, form select, form button {
+      margin-top: 5px;
+      margin-bottom: 10px;
+      padding: 6px;
+      width: 100%;
+      border-radius: 5px;
+      border: 1px solid #1e293b;
+      background: #0f172a;
+      color: white;
+    }
+
+    form button {
+      background: #38bdf8;
+      color: black;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .stars {
+      color: #facc15;
+    }
+
+    .status-upcoming {
+      color: #38bdf8;
+      font-weight: bold;
+    }
+
+    .status-completed {
+      color: #22c55e;
+      font-weight: bold;
     }
 
     footer {
@@ -83,85 +125,221 @@
 </head>
 
 <body>
-
   <header>
     Staff Dispatch Web
   </header>
 
   <nav>
     <a href="index.html">Home</a>
-    <a href="workers.html">Workers</a>
-    <a href="customers.html">Customers</a>
-    <a href="events.html">Events</a>
+    <a href="#workers-section">Workers</a>
+    <a href="#customers-section">Customers</a>
+    <a href="#events-section">Events</a>
   </nav>
 
   <div class="hero">
     <h1>Smart Staff & Event Management</h1>
-    <p>
-      Manage workers, customers, and event scheduling in one clean system.
-      Built for real businesses that move fast.
-    </p>
+    <p>Manage workers, customers, and event scheduling in one clean system.</p>
   </div>
 
-  <div class="cards">
-    <div class="card">
-      <h3>Workers</h3>
-      <p>Manage availability, roles and reliability.</p>
-    </div>
-
-    <div class="card">
-      <h3>Customers</h3>
-      <p>Store client info, custom pricing and contact details.</p>
-    </div>
-
-    <div class="card">
-      <h3>Events</h3>
-      <p>Schedule events and auto-assign workers.</p>
-    </div>
-
-    <div class="card">
-      <h3>Quotes</h3>
-      <p>Automatically generate smart quotations.</p>
-    </div>
+  <!-- Workers Section -->
+  <div class="section" id="workers-section">
+    <h2>Workers</h2>
+    <div class="cards" id="workers-cards"></div>
+    <form id="workers-form">
+      <input type="text" name="name" placeholder="Name" required />
+      <input type="text" name="role" placeholder="Role" required />
+      <input type="text" name="contract" placeholder="Contract type" required />
+      <input type="number" name="stars" placeholder="Stars (1-5)" min="1" max="5" />
+      <button type="submit">Add Worker</button>
+    </form>
   </div>
 
-  <!-- Workers dynamic section -->
-  <div class="cards" id="workersContainer">
-    <!-- Supabase Workers will appear here -->
+  <!-- Customers Section -->
+  <div class="section" id="customers-section">
+    <h2>Customers</h2>
+    <div class="cards" id="customers-cards"></div>
+    <form id="customers-form">
+      <input type="text" name="name" placeholder="Customer Name" required />
+      <input type="text" name="type" placeholder="Customer Type" required />
+      <input type="number" name="customRate" placeholder="Custom Rate (ZAR)" step="0.01" />
+      <button type="submit">Add Customer</button>
+    </form>
+  </div>
+
+  <!-- Events Section -->
+  <div class="section" id="events-section">
+    <h2>Events</h2>
+    <div class="cards" id="events-cards"></div>
+    <form id="events-form">
+      <input type="text" name="title" placeholder="Event Title" required />
+      <input type="date" name="date" required />
+      <input type="text" name="location" placeholder="Location" required />
+      <input type="number" name="staffNeeded" placeholder="Staff Needed" min="1" required />
+      <input type="text" name="status" placeholder="Status (Upcoming/Completed)" required />
+      <button type="submit">Add Event</button>
+    </form>
   </div>
 
   <footer>
     © 2025 Staff Dispatch Web — Built by Mel 🚀
   </footer>
 
-<script type="module">
-  import { supabase } from './supabaseClient.js'
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-  async function getWorkers() {
-    let { data: workers, error } = await supabase.from('workers').select('*')
-    if (error) {
-      console.error('Error fetching workers:', error)
-      return
+    // ✅ Your Supabase project details
+    const supabaseUrl = 'https://rplmbuoyjlpcxskmtlzk.supabase.co'
+    const supabaseKey = 'sb_publishable_Ghw5xJ5IoGL2EzlCHCKLLQ_gWZPryTD'
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // Helper functions
+    function renderStars(num) {
+      return '⭐'.repeat(num || 0)
     }
 
-    const container = document.getElementById('workersContainer')
-    container.innerHTML = '' // clear existing content
+    function renderStatus(status) {
+      if (!status) return ''
+      if (status.toLowerCase() === 'completed') return `<span class="status-completed">${status}</span>`
+      return `<span class="status-upcoming">${status}</span>`
+    }
 
-    workers.forEach(worker => {
-      const card = document.createElement('div')
-      card.className = 'card'
-      card.innerHTML = `
-        <h3>${worker.name}</h3>
-        <p>Role: ${worker.role}</p>
-        <p>Contract: ${worker.contract}</p>
-        <p>Stars: ${'⭐'.repeat(worker.stars || 0)}</p>
-      `
-      container.appendChild(card)
+    // Fetch & display data from Supabase
+    async function fetchAndDisplay(table, containerId) {
+      const { data, error } = await supabase.from(table).select('*')
+      const container = document.getElementById(containerId)
+      container.innerHTML = ''
+
+      if (error) {
+        container.innerHTML = `<p>Error loading ${table}: ${error.message}</p>`
+        return
+      }
+
+      data.forEach(item => {
+        const card = document.createElement('div')
+        card.className = 'card'
+
+        if (table === 'workers') {
+          card.innerHTML = `<h3>${item.name}</h3>
+                            <strong>Role:</strong> ${item.role}<br>
+                            <strong>Contract:</strong> ${item.contract}<br>
+                            <strong>Stars:</strong> <span class="stars">${renderStars(item.stars)}</span>`
+        } else if (table === 'events') {
+          card.innerHTML = `<h3>${item.title}</h3>
+                            <strong>Date:</strong> ${item.date}<br>
+                            <strong>Location:</strong> ${item.location}<br>
+                            <strong>Staff Needed:</strong> ${item.staffNeeded}<br>
+                            <strong>Status:</strong> ${renderStatus(item.status)}`
+        } else {
+          card.innerHTML = `<h3>${item.name}</h3>
+                            <strong>Type:</strong> ${item.type}<br>
+                            <strong>Custom Rate:</strong> ZAR ${item.customRate}`
+        }
+
+        container.appendChild(card)
+      })
+    }
+
+    // Auto-refresh all lists
+    async function refreshAll() {
+      await fetchAndDisplay('workers', 'workers-cards')
+      await fetchAndDisplay('customers', 'customers-cards')
+      await fetchAndDisplay('events', 'events-cards')
+    }
+
+    refreshAll()
+
+    // Forms submission
+    document.getElementById('workers-form').addEventListener('submit', async e => {
+      e.preventDefault()
+      const values = Object.fromEntries(new FormData(e.target).entries())
+      await supabase.from('workers').insert([values])
+      e.target.reset()
+      refreshAll()
     })
+
+    document.getElementById('customers-form').addEventListener('submit', async e => {
+      e.preventDefault()
+      const values = Object.fromEntries(new FormData(e.target).entries())
+      await supabase.from('customers').insert([values])
+      e.target.reset()
+      refreshAll()
+    })
+
+    document.getElementById('events-form').addEventListener('submit', async e => {
+      e.preventDefault()
+      const values = Object.fromEntries(new FormData(e.target).entries())
+      await supabase.from('events').insert([values])
+      e.target.reset()
+      refreshAll()
+    })
+    // ---------- SMS / WhatsApp Notifications ----------
+async function sendNotification(workerPhone, message, method = 'sms') {
+  // NOTE: Replace this with your actual SMS / WhatsApp API service
+  // Example uses Twilio or other services
+  try {
+    // Pseudo-function: implement your API call here
+    console.log(`Sending ${method} to ${workerPhone}: ${message}`)
+    // await yourApi.sendMessage(workerPhone, message)
+  } catch (error) {
+    console.error('Notification failed', error)
+  }
+}
+
+// Notify all workers assigned to an event
+async function notifyAssignedWorkers(event) {
+  // Fetch assigned workers from your database (assumes a relation table or field)
+  const { data: workers, error } = await supabase
+    .from('workers')
+    .select('*')
+    .eq('assignedEvent', event.id) // Adjust field name as per your schema
+
+  if (error) {
+    console.error('Failed to get assigned workers', error)
+    return
   }
 
-  getWorkers()
-</script>
+  workers.forEach(worker => {
+    sendNotification(worker.phone || '0000000000', `You are assigned to: ${event.title}`, 'whatsapp')
+  })
+}
 
+// ---------- Intelligent Quote Generation ----------
+function generateQuote(customer, staffCount) {
+  // Simple example: base rate + per staff
+  const baseRate = customer.type.toLowerCase() === 'type a' ? (customer.customRate || 500) : 300
+  const staffRate = staffCount * 150
+  const totalQuote = baseRate + staffRate
+  return totalQuote
+}
+
+// Hook auto-quote when adding an event
+document.getElementById('events-form').addEventListener('submit', async e => {
+  e.preventDefault()
+  const form = e.target
+  const values = Object.fromEntries(new FormData(form).entries())
+
+  // Fetch customer info for quote
+  const { data: customerData } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('name', values.customerName)
+    .single()
+
+  const quoteAmount = generateQuote(customerData, parseInt(values.staffNeeded))
+  values.quote = quoteAmount
+
+  // Insert event with quote
+  await supabase.from('events').insert([values])
+
+  form.reset()
+  refreshAll()
+
+  // Notify assigned workers (optional)
+  notifyAssignedWorkers(values)
+})
+
+
+    // TODO: Plug in SMS/WhatsApp notifications & automated quote generation here
+  </script>
 </body>
 </html>
