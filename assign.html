@@ -1,0 +1,126 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Assign Worker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      background: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .box {
+      background: #020617;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 500px;
+      margin: auto;
+      border: 1px solid #1e293b;
+    }
+
+    select, button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+    }
+
+    button {
+      background: #38bdf8;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .link-box {
+      margin-top: 15px;
+      padding: 10px;
+      background: black;
+      border-radius: 6px;
+      word-break: break-all;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Assign Worker to Event</h1>
+
+  <div class="box">
+
+    <label>Worker</label>
+    <select id="workerSelect"></select>
+
+    <label>Event</label>
+    <select id="eventSelect"></select>
+
+    <button onclick="assign()">Assign Worker</button>
+
+    <div class="link-box" id="linkBox"></div>
+
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const supabaseUrl = 'https://rplmbuoyjlpcxskmtlzk.supabase.co'
+    const supabaseKey = 'sb_publishable_Ghw5xJ5IoGL2EzlCHCKLLQ_gWZPryTD'
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    async function loadData() {
+      const { data: workers } = await supabase.from('workers').select('*')
+      const { data: events } = await supabase.from('events').select('*')
+
+      const workerSelect = document.getElementById('workerSelect')
+      const eventSelect = document.getElementById('eventSelect')
+
+      workers.forEach(w => {
+        const opt = document.createElement('option')
+        opt.value = w.id
+        opt.textContent = w.name
+        workerSelect.appendChild(opt)
+      })
+
+      events.forEach(e => {
+        const opt = document.createElement('option')
+        opt.value = e.id
+        opt.textContent = e.title
+        eventSelect.appendChild(opt)
+      })
+    }
+
+    window.assign = async function () {
+      const workerId = document.getElementById('workerSelect').value
+      const eventId = document.getElementById('eventSelect').value
+
+      const { data, error } = await supabase
+        .from('worker_assignments')
+        .insert([{ worker_id: workerId, event_id: eventId, status: 'pending' }])
+        .select()
+        .single()
+
+      if (error) {
+        alert('Error assigning worker')
+        return
+      }
+
+      const link = `https://YOUR-VERCEL-SITE/respond.html?id=${data.id}`
+      document.getElementById('linkBox').innerText =
+        'Send this link to the worker on WhatsApp:\n\n' + link
+    }
+
+    loadData()
+  </script>
+
+</body>
+</html>
