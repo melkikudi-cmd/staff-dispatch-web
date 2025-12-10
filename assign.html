@@ -1,73 +1,65 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Assign Worker</title>
+  <title>Assign Workers to Events</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <style>
     body {
       background: #0f172a;
       color: white;
       font-family: Arial, sans-serif;
       padding: 20px;
-    }
-
-    h1 {
       text-align: center;
     }
-
-    .box {
+    .section {
+      max-width: 600px;
+      margin: 30px auto;
       background: #020617;
       padding: 20px;
       border-radius: 12px;
-      max-width: 500px;
-      margin: auto;
       border: 1px solid #1e293b;
     }
-
     select, button {
       width: 100%;
-      margin-top: 10px;
       padding: 10px;
-      border-radius: 6px;
-      border: none;
-      font-size: 16px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #1e293b;
+      background: #0f172a;
+      color: white;
     }
-
     button {
       background: #38bdf8;
       color: black;
       font-weight: bold;
       cursor: pointer;
     }
-
-    .link-box {
-      margin-top: 15px;
-      padding: 10px;
-      background: black;
-      border-radius: 6px;
+    .link {
+      color: #22c55e;
+      font-weight: bold;
       word-break: break-all;
-      font-size: 14px;
+    }
+    .status {
+      margin-top: 15px;
+      font-weight: bold;
     }
   </style>
 </head>
-
 <body>
 
-  <h1>Assign Worker to Event</h1>
+  <div class="section">
+    <h2>Assign Worker to Event</h2>
+    <label for="worker-select">Select Worker:</label>
+    <select id="worker-select"></select>
 
-  <div class="box">
+    <label for="event-select">Select Event:</label>
+    <select id="event-select"></select>
 
-    <label>Worker</label>
-    <select id="workerSelect"></select>
+    <button id="assign-btn">Assign Worker</button>
 
-    <label>Event</label>
-    <select id="eventSelect"></select>
-
-    <button onclick="assign()">Assign Worker</button>
-
-    <div class="link-box" id="linkBox"></div>
-
+    <p class="status" id="status"></p>
+    <p>Assignment Link: <span class="link" id="assignment-link">-</span></p>
   </div>
 
   <script type="module">
@@ -77,49 +69,61 @@
     const supabaseKey = 'sb_publishable_Ghw5xJ5IoGL2EzlCHCKLLQ_gWZPryTD'
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    async function loadData() {
-      const { data: workers } = await supabase.from('workers').select('*')
-      const { data: events } = await supabase.from('events').select('*')
+    const workerSelect = document.getElementById('worker-select')
+    const eventSelect = document.getElementById('event-select')
+    const statusEl = document.getElementById('status')
+    const linkEl = document.getElementById('assignment-link')
 
-      const workerSelect = document.getElementById('workerSelect')
-      const eventSelect = document.getElementById('eventSelect')
-
+    async function loadWorkers() {
+      const { data: workers, error } = await supabase.from('workers').select('*')
+      if (error) { console.error(error); return }
       workers.forEach(w => {
-        const opt = document.createElement('option')
-        opt.value = w.id
-        opt.textContent = w.name
-        workerSelect.appendChild(opt)
-      })
-
-      events.forEach(e => {
-        const opt = document.createElement('option')
-        opt.value = e.id
-        opt.textContent = e.title
-        eventSelect.appendChild(opt)
+        const option = document.createElement('option')
+        option.value = w.id
+        option.textContent = w.name
+        workerSelect.appendChild(option)
       })
     }
 
-    window.assign = async function () {
-      const workerId = document.getElementById('workerSelect').value
-      const eventId = document.getElementById('eventSelect').value
+    async function loadEvents() {
+      const { data: events, error } = await supabase.from('events').select('*')
+      if (error) { console.error(error); return }
+      events.forEach(e => {
+        const option = document.createElement('option')
+        option.value = e.id
+        option.textContent = `${e.title} (${e.date})`
+        eventSelect.appendChild(option)
+      })
+    }
 
-      const { data, error } = await supabase
-        .from('worker_assignments')
-        .insert([{ worker_id: workerId, event_id: eventId, status: 'pending' }])
-        .select()
-        .single()
+    async function assignWorker() {
+      const workerId = workerSelect.value
+      const eventId = eventSelect.value
+      if (!workerId || !eventId) return
+
+      const { data, error } = await supabase.from('worker_assignments').insert([{
+        worker_id: workerId,
+        event_id: eventId,
+        status: 'pending',
+        assigned_at: new Date().toISOString()
+      }]).single()
 
       if (error) {
-        alert('Error assigning worker')
+        statusEl.textContent = 'Error assigning worker'
+        console.error(error)
+        linkEl.textContent = '-'
         return
       }
 
-      const link = `https://https://rplmbuoyjlpcxskmtlzk.supabase.co/respond.html?id=${data.id}`
-      document.getElementById('linkBox').innerText =
-        'Send this link to the worker on WhatsApp:\n\n' + link
+      statusEl.textContent = '✅ Worker assigned successfully!'
+      const assignmentLink = `${window.location.origin}/respond.html?id=${data.id}`
+      linkEl.textContent = assignmentLink
     }
 
-    loadData()
+    document.getElementById('assign-btn').addEventListener('click', assignWorker)
+
+    loadWorkers()
+    loadEvents()
   </script>
 
 </body>
