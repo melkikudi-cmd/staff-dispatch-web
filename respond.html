@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Job Response</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      background: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .card {
+      background: #020617;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 400px;
+      margin: auto;
+      border: 1px solid #1e293b;
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .accept {
+      background: #22c55e;
+      color: black;
+    }
+
+    .decline {
+      background: #ef4444;
+      color: black;
+    }
+
+    .status {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card">
+    <h2>Job Assignment</h2>
+    <p id="job-info">Loading job details...</p>
+
+    <button class="accept" onclick="respond('accepted')">✅ Accept</button>
+    <button class="decline" onclick="respond('declined')">❌ Decline</button>
+
+    <p class="status" id="status"></p>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const supabaseUrl = 'https://rplmbuoyjlpcxskmtlzk.supabase.co'
+    const supabaseKey = 'sb_publishable_Ghw5xJ5IoGL2EzlCHCKLLQ_gWZPryTD'
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    const params = new URLSearchParams(window.location.search)
+    const assignmentId = params.get('id')
+
+    async function loadJob() {
+      const { data, error } = await supabase
+        .from('worker_assignments')
+        .select('*')
+        .eq('id', assignmentId)
+        .single()
+
+      if (error || !data) {
+        document.getElementById('job-info').innerText = 'Invalid job link'
+        return
+      }
+
+      document.getElementById('job-info').innerText =
+        `You have been assigned to Event ID: ${data.event_id}`
+    }
+
+    async function respond(choice) {
+      const { error } = await supabase
+        .from('worker_assignments')
+        .update({ status: choice })
+        .eq('id', assignmentId)
+
+      if (error) {
+        document.getElementById('status').innerText = 'Error saving response'
+      } else {
+        document.getElementById('status').innerText =
+          `✅ You have ${choice.toUpperCase()} this job`
+      }
+    }
+
+    loadJob()
+  </script>
+
+</body>
+</html>
