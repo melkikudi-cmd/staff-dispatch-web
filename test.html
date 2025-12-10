@@ -1,0 +1,56 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Staff Dispatch Web - Test Page</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { background: #0f172a; color: white; font-family: Arial, sans-serif; padding: 20px; }
+    button { margin: 5px; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 5px; border: none; background: #38bdf8; color: black; }
+    h1 { color: #38bdf8; }
+    pre { background: #020617; padding: 15px; border-radius: 8px; max-height: 300px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <h1>Staff Dispatch Web — Test & Verify</h1>
+
+  <button id="fetch-workers">Fetch Workers</button>
+  <button id="fetch-customers">Fetch Customers</button>
+  <button id="fetch-events">Fetch Events</button>
+
+  <pre id="output">Output will appear here...</pre>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const supabaseUrl = 'https://rplmbuoyjlpcxskmtlzk.supabase.co'
+    const supabaseKey = 'sb_publishable_Ghw5xJ5IoGL2EzlCHCKLLQ_gWZPryTD'
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    const output = document.getElementById('output')
+
+    async function fetchTable(table) {
+      const { data, error } = await supabase.from(table).select('*')
+      if (error) {
+        output.textContent = `Error fetching ${table}: ${error.message}`
+      } else {
+        output.textContent = `=== ${table.toUpperCase()} ===\n` + JSON.stringify(data, null, 2)
+      }
+    }
+
+    document.getElementById('fetch-workers').addEventListener('click', () => fetchTable('workers'))
+    document.getElementById('fetch-customers').addEventListener('click', () => fetchTable('customers'))
+    document.getElementById('fetch-events').addEventListener('click', () => fetchTable('events'))
+
+    // Test auto-notify (console) for assigned workers
+    async function notifyTest() {
+      const { data: events } = await supabase.from('events').select('*').limit(1)
+      if (events.length) {
+        const event = events[0]
+        console.log(`Simulating notifications for event: ${event.title}`)
+      }
+    }
+
+    notifyTest()
+  </script>
+</body>
+</html>
