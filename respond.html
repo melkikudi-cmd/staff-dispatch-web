@@ -1,80 +1,113 @@
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Worker Response Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8" />
+  <title>Job Response</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
-    body { font-family: Arial, sans-serif; background:#0f172a; color:white; margin:0; }
-    header { background:#020617; padding:20px; text-align:center; font-size:24px; }
-    .container { padding:20px; max-width:900px; margin:auto; }
-    .assignment-card { background:#020617; padding:15px; border-radius:10px; border:1px solid #1e293b; margin-bottom:15px; }
-    button { margin-right:10px; padding:6px 12px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; }
-    .accept { background:#22c55e; color:white; }
-    .decline { background:#ef4444; color:white; }
+    body {
+      background: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .card {
+      background: #020617;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 400px;
+      margin: auto;
+      border: 1px solid #1e293b;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4);
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .accept {
+      background: #22c55e;
+      color: black;
+    }
+
+    .decline {
+      background: #ef4444;
+      color: black;
+    }
+
+    .status {
+      margin-top: 15px;
+      font-weight: bold;
+    }
   </style>
 </head>
+
 <body>
 
-<header>Worker Response Dashboard</header>
+  <div class="card">
+    <h2>Job Assignment</h2>
+    <p id="job-info">Loading job details...</p>
 
-<div class="container" id="assignments-container">
-  <p>Loading assignments...</p>
-</div>
+    <button class="accept" onclick="respond('accepted')">✅ Accept</button>
+    <button class="decline" onclick="respond('declined')">❌ Decline</button>
 
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    <p class="status" id="status"></p>
+  </div>
 
-  const supabaseUrl = 'https://rplmbuoyjlpcxskmtlzk.supabase.co'
-  const supabaseKey = 'sb_publishable_Ghw5xJ5IoGL2EzlCHCKLLQ_gWZPryTD'
-  const supabase = createClient(supabaseUrl, supabaseKey)
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-  async function fetchAssignments() {
-    const { data, error } = await supabase
-      .from('worker_assignments')
-      .select('id, status, assigned_at, workers(name), events(title, date)')
-    
-    const container = document.getElementById('assignments-container')
-    container.innerHTML = ''
-    
-    if (error) {
-      container.innerHTML = `<p>Error loading assignments: ${error.message}</p>`
-      return
+    const supabaseUrl = 'https://rplmbuoyjlpcxskmtlzk.supabase.co'
+    const supabaseKey = 'sb_publishable_Ghw5xJ5IoGL2EzlCHCKLLQ_gWZPryTD'
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    const params = new URLSearchParams(window.location.search)
+    const assignmentId = params.get('id')
+
+    async function loadJob() {
+      const { data, error } = await supabase
+        .from('worker_assignments')
+        .select('id, worker_id, event_id, status, assigned_at')
+        .eq('id', assignmentId)
+        .single()
+
+      if (error || !data) {
+        document.getElementById('job-info').innerText = 'Invalid job link'
+        return
+      }
+
+      document.getElementById('job-info').innerText =
+        `You have been assigned to Event ID: ${data.event_id}`
     }
 
-    if (!data.length) {
-      container.innerHTML = '<p>No assignments at the moment.</p>'
-      return
+    async function respond(choice) {
+      const { error } = await supabase
+        .from('worker_assignments')
+        .update({ status: choice })
+        .eq('id', assignmentId)
+
+      if (error) {
+        document.getElementById('status').innerText = 'Error saving response'
+      } else {
+        document.getElementById('status').innerText =
+          `✅ You have ${choice.toUpperCase()} this job`
+      }
     }
 
-    data.forEach(item => {
-      const card = document.createElement('div')
-      card.className = 'assignment-card'
-      card.innerHTML = `
-        <p><strong>Event:</strong> ${item.events.title} (${item.events.date})</p>
-        <p><strong>Worker:</strong> ${item.workers.name}</p>
-        <p><strong>Status:</strong> ${item.status}</p>
-        <button class="accept">Accept</button>
-        <button class="decline">Decline</button>
-      `
-
-      card.querySelector('.accept').onclick = () => respond(item.id, 'accepted')
-      card.querySelector('.decline').onclick = () => respond(item.id, 'declined')
-
-      container.appendChild(card)
-    })
-  }
-
-  async function respond(assignmentId, newStatus) {
-    await supabase
-      .from('worker_assignments')
-      .update({ status: newStatus })
-      .eq('id', assignmentId)
-    
-    fetchAssignments() // Refresh
-  }
-
-  fetchAssignments()
-</script>
+    loadJob()
+  </script>
 
 </body>
 </html>
