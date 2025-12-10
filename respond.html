@@ -1,9 +1,9 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Job Response</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <style>
     body {
       background: #0f172a;
@@ -12,7 +12,6 @@
       padding: 20px;
       text-align: center;
     }
-
     .card {
       background: #020617;
       padding: 20px;
@@ -20,14 +19,7 @@
       max-width: 400px;
       margin: auto;
       border: 1px solid #1e293b;
-      transition: transform 0.2s, box-shadow 0.2s;
     }
-
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4);
-    }
-
     button {
       margin: 10px;
       padding: 10px 20px;
@@ -36,24 +28,20 @@
       font-weight: bold;
       cursor: pointer;
     }
-
     .accept {
       background: #22c55e;
       color: black;
     }
-
     .decline {
       background: #ef4444;
       color: black;
     }
-
     .status {
       margin-top: 15px;
       font-weight: bold;
     }
   </style>
 </head>
-
 <body>
 
   <div class="card">
@@ -77,19 +65,25 @@
     const assignmentId = params.get('id')
 
     async function loadJob() {
-      const { data, error } = await supabase
+      // Get assignment
+      const { data: assignment, error: assignError } = await supabase
         .from('worker_assignments')
-        .select('id, worker_id, event_id, status, assigned_at')
+        .select('id, event_id, status, inserted_at, workers(id, name), events(id, title, date, location)')
         .eq('id', assignmentId)
         .single()
 
-      if (error || !data) {
+      if (assignError || !assignment) {
         document.getElementById('job-info').innerText = 'Invalid job link'
         return
       }
 
-      document.getElementById('job-info').innerText =
-        `You have been assigned to Event ID: ${data.event_id}`
+      // Show event details
+      const event = assignment.events
+      document.getElementById('job-info').innerHTML =
+        `<strong>Event:</strong> ${event.title}<br>
+         <strong>Date:</strong> ${event.date}<br>
+         <strong>Location:</strong> ${event.location}<br>
+         <strong>Current Status:</strong> ${assignment.status}`
     }
 
     async function respond(choice) {
